@@ -1,9 +1,9 @@
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local CoreGui = game:GetService("CoreGui")
 local RunService = game:GetService("RunService")
+local VirtualUser = game:GetService("VirtualUser")
 local localPlayer = Players.LocalPlayer
 
 local carDB = {
@@ -50,15 +50,19 @@ local function getDetails(m)
     return mk, col, pl
 end
 
-local function send(msg)
-    local tcs = game:GetService("TextChatService")
-    if tcs and tcs.ChatVersion == Enum.ChatVersion.TextChatService then
-        local ch = tcs.TextChannels:FindFirstChild("RBXGeneral")
-        if ch then ch:SendAsync(msg) end
-    else
-        local r = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents") and ReplicatedStorage.DefaultChatSystemChatEvents:FindFirstChild("SayMessageRequest")
-        if r then r:FireServer(msg, "All") end
+-- Новая безотказная функция отправки через эмуляцию ввода в поле "/"
+local function hardSend(text)
+    -- Открываем чат правильным слэшем
+    VirtualUser:TypeKey(Enum.KeyCode.Slash)
+    task.wait(0.1)
+    -- Вбиваем текст команды /do
+    for i = 1, #text do
+        local char = string.sub(text, i, i)
+        VirtualUser:TypeText(char)
     end
+    task.wait(0.05)
+    -- Нажимаем Enter для отправки
+    VirtualUser:TypeKey(Enum.KeyCode.Return)
 end
 
 local sg = Instance.new("ScreenGui", CoreGui)
@@ -143,9 +147,9 @@ end)
 UserInputService.InputBegan:Connect(function(i, p)
     if p or not selModel or (cDist and cDist > 100) then return end
     local info = string.format("%s %s %s", cColor, cMark, cPlate)
-    if i.KeyCode == Enum.KeyCode.F1 then send("/do 1 законное требование Справа прижимай, " .. info)
-    elseif i.KeyCode == Enum.KeyCode.F2 then send("/do 2 законное требование Справа прижимай, " .. info)
-    elseif i.KeyCode == Enum.KeyCode.F3 then send("/do 3 законное требование Справа прижимай, " .. info)
-    elseif i.KeyCode == Enum.KeyCode.F4 then send("/do Предупреждение о стрельбе по колесам Справа прижимай, " .. info)
+    if i.KeyCode == Enum.KeyCode.F1 then hardSend("/do 1 законное требование Справа прижимай, " .. info)
+    elseif i.KeyCode == Enum.KeyCode.F2 then hardSend("/do 2 законное требование Справа прижимай, " .. info)
+    elseif i.KeyCode == Enum.KeyCode.F3 then hardSend("/do 3 законное требование Справа прижимай, " .. info)
+    elseif i.KeyCode == Enum.KeyCode.F4 then hardSend("/do Предупреждение о стрельбе по колесам Справа прижимай, " .. info)
     end
 end)
