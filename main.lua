@@ -50,18 +50,14 @@ local function getDetails(m)
     return mk, col, pl
 end
 
--- Новая безотказная функция отправки через эмуляцию ввода в поле "/"
 local function hardSend(text)
-    -- Открываем чат правильным слэшем
     VirtualUser:TypeKey(Enum.KeyCode.Slash)
     task.wait(0.1)
-    -- Вбиваем текст команды /do
     for i = 1, #text do
         local char = string.sub(text, i, i)
         VirtualUser:TypeText(char)
     end
     task.wait(0.05)
-    -- Нажимаем Enter для отправки
     VirtualUser:TypeKey(Enum.KeyCode.Return)
 end
 
@@ -88,12 +84,15 @@ Instance.new("UICorner", lbl).CornerRadius = UDim.new(0, 6)
 local m = localPlayer:GetMouse()
 local tmp = nil
 
+-- ИСПРАВЛЕННЫЙ БЛОК: Меню больше не пропадает само по себе
 m.Button1Down:Connect(function()
     if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
         local t = m.Target
         local cm = t and t:FindFirstAncestorOfClass("Model")
         if cm and (cm:FindFirstChildOfClass("VehicleSeat") or cm.Parent:FindFirstChildOfClass("VehicleSeat")) then
             tmp = cm
+            -- Небольшая задержка, чтобы инжектор успел обработать координаты клика
+            task.wait(0.05)
             f.Position = UDim2.new(0, m.X + 10, 0, m.Y + 10)
             f.Visible = true
         end
@@ -117,14 +116,6 @@ b2.MouseButton1Click:Connect(function()
     lbl.Text = "ОБ ДПС: [Зажми Ctrl + Клик на авто]"
     lbl.TextColor3 = Color3.fromRGB(255, 255, 255)
     f.Visible = false
-end)
-
-UserInputService.InputBegan:Connect(function(i)
-    if i.UserInputType == Enum.UserInputType.MouseButton1 and f.Visible then
-        if m.X < f.AbsolutePosition.X or m.X > (f.AbsolutePosition.X + f.AbsoluteSize.X) or m.Y < f.AbsolutePosition.Y or m.Y > (f.AbsolutePosition.Y + f.AbsoluteSize.Y) then
-            task.wait(0.1) f.Visible = false
-        end
-    end
 end)
 
 RunService.Heartbeat:Connect(function()
