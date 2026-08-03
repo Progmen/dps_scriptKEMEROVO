@@ -3,7 +3,6 @@ local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local RunService = game:GetService("RunService")
-local VirtualUser = game:GetService("VirtualUser")
 local localPlayer = Players.LocalPlayer
 
 local carDB = {
@@ -50,15 +49,21 @@ local function getDetails(m)
     return mk, col, pl
 end
 
-local function hardSend(text)
-    VirtualUser:TypeKey(Enum.KeyCode.Slash)
-    task.wait(0.1)
-    for i = 1, #text do
-        local char = string.sub(text, i, i)
-        VirtualUser:TypeText(char)
+-- Безопасная функция отправки без использования VirtualUser
+local function safeSend(text)
+    local textChatService = game:GetService("TextChatService")
+    if textChatService and textChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+        local channel = textChatService.TextChannels:FindFirstChild("RBXGeneral")
+         if channel then 
+            channel:SendAsync(text) 
+         end
+    else
+        -- Запасной скрытый метод для старых версий чата
+        local sayMessage = game:GetService("ReplicatedStorage"):FindFirstChild("SayMessageRequest", true)
+        if sayMessage and sayMessage:IsA("RemoteEvent") then
+            sayMessage:FireServer(text, "All")
+        end
     end
-    task.wait(0.05)
-    VirtualUser:TypeKey(Enum.KeyCode.Return)
 end
 
 local sg = Instance.new("ScreenGui", CoreGui)
@@ -84,14 +89,12 @@ Instance.new("UICorner", lbl).CornerRadius = UDim.new(0, 6)
 local m = localPlayer:GetMouse()
 local tmp = nil
 
--- ИСПРАВЛЕННЫЙ БЛОК: Меню больше не пропадает само по себе
 m.Button1Down:Connect(function()
     if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
         local t = m.Target
         local cm = t and t:FindFirstAncestorOfClass("Model")
         if cm and (cm:FindFirstChildOfClass("VehicleSeat") or cm.Parent:FindFirstChildOfClass("VehicleSeat")) then
             tmp = cm
-            -- Небольшая задержка, чтобы инжектор успел обработать координаты клика
             task.wait(0.05)
             f.Position = UDim2.new(0, m.X + 10, 0, m.Y + 10)
             f.Visible = true
@@ -138,9 +141,9 @@ end)
 UserInputService.InputBegan:Connect(function(i, p)
     if p or not selModel or (cDist and cDist > 100) then return end
     local info = string.format("%s %s %s", cColor, cMark, cPlate)
-    if i.KeyCode == Enum.KeyCode.F1 then hardSend("/do 1 законное требование Справа прижимай, " .. info)
-    elseif i.KeyCode == Enum.KeyCode.F2 then hardSend("/do 2 законное требование Справа прижимай, " .. info)
-    elseif i.KeyCode == Enum.KeyCode.F3 then hardSend("/do 3 законное требование Справа прижимай, " .. info)
-    elseif i.KeyCode == Enum.KeyCode.F4 then hardSend("/do Предупреждение о стрельбе по колесам Справа прижимай, " .. info)
+    if i.KeyCode == Enum.KeyCode.F1 then safeSend("/do 1 законное требование Справа прижимай, " .. info)
+    elseif i.KeyCode == Enum.KeyCode.F2 then safeSend("/do 2 законное требование Справа прижимай, " .. info)
+    elseif i.KeyCode == Enum.KeyCode.F3 then safeSend("/do 3 законное требование Справа прижимай, " .. info)
+    elseif i.KeyCode == Enum.KeyCode.F4 then safeSend("/do Предупреждение о стрельбе по колесам Справа прижимай, " .. info)
     end
 end)
